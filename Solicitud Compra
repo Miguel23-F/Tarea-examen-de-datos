@@ -1,0 +1,83 @@
+from Consola import *
+
+class SolicitudCompra:
+    # Creamos la clase SolicitudCompra con los atributos necesarios,
+    def __init__(self, *params):
+        if len(params) == 4:
+            self.__RFCtienda = params[0]
+            self.__NombreTienda = params[1]
+            self.__NombreConsola = params[2]
+            self.__cantidad = params[3]
+        else:
+            # Constructor por omisión.
+            self.__RFCtienda = "GAM0309104A4"
+            self.__NombreTienda = "Game Planet"
+            self.__cantidad = 20
+            self.__NombreConsola = "PlayStation 5"
+
+    @property
+    def RFCtienda(self):
+        '''
+        Método getter del RFC
+        :return: El RFC de la tienda
+        '''
+        return self.__RFCtienda
+
+    @RFCtienda.setter
+    def RFCtienda(self, RFCtienda):
+        '''
+        Método setter del RFC
+        '''
+        self.__RFCtienda = RFCtienda
+
+    @property
+    def NombreTienda(self):
+        '''
+        Método getter del nombre de la tienda
+        :return: El nombre de la tienda
+        '''
+        return self.__NombreTienda
+
+    @NombreTienda.setter
+    def NombreTienda(self, NombreTienda):
+        '''
+        Método setter del nombre de la tienda
+        '''
+        self.__NombreTienda = NombreTienda
+
+    @property
+    def cantidad(self):
+        '''
+        setter de la cantidad de consolas
+        :return: la cantidad de consolas
+        '''
+
+        return self.__cantidad
+
+    @cantidad.setter
+    def cantidad(self, cantidad):
+        '''
+        setter de la cantidad de consolas
+        '''
+        self.__cantidad = cantidad
+
+    @property
+    def NombreConsola(self):
+        '''
+        getter del nombre de la consola
+        :return: el nombre de la consola
+        '''
+        return self.__NombreConsola
+
+    @NombreConsola.setter
+    def NombreConsola(self, NombreConsola):
+        '''
+        setter del nombre de la consola
+        '''
+        self.__NombreConsola = NombreConsola
+
+    def __llave(self):
+        return self.__RFCtienda, self.__NombreTienda, self.__cantidad
+
+    def __str__(self):
+        return str(self.RFCtienda) + " " + str(self.__NombreTienda) + " " + str(self.__cantidad) + " consolas " + str(self.__NombreConsola)
