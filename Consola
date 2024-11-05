@@ -1,0 +1,70 @@
+# Importamos para establecer el formato moneda
+from locale import currency, setlocale, LC_MONETARY
+
+class Consola: #Creamos la clase consola con los atributos requeridos.
+    def __init__(self, *params):
+        if len(params) == 4:
+            self.__codigo = params[0]
+            self.__nombre = params[1]
+            self.__fabricante = params[2]
+            self.__precio = float(params[3])
+        else:
+            #Constructor por omisión.
+            self.__codigo = A12345678Z
+            self.__nombre = "PlayStation 5"
+            self.__fabricante = "Sony"
+            self.__precio = 11999
+
+    #Métodos getter y setter
+
+    @property
+    def codigo(self):
+        """Obtiene el código de la consola."""
+        return self.__codigo
+
+    @codigo.setter
+    def codigo(self, codigo):
+        """Se establece el código de la consola."""
+        self.__codigo = codigo
+
+    @property
+    def nombre(self):
+        """Nombre de la consola."""
+        return self.__nombre
+
+    @nombre.setter
+    def nombre(self, nombre):
+        self.__nombre = nombre
+
+    @property
+    def fabricante(self):
+        """Obtiene el fabricante de la consola."""
+        return self.__fabricante
+
+    @fabricante.setter
+    def fabricante(self, fabricante):
+        """Establece el fabricante de la consola."""
+        self.__fabricante = fabricante
+
+    @property
+    def precio(self):
+        return self.__precio
+
+    @precio.setter
+    def precio(self, precio):
+        """Establece el precio de la consola.
+        Args: El nuevo precio de la consola
+        Raises:
+        ValueError: Si el precio no puede ser convertido a un valor float.
+        """
+        self.__precio = float(precio)
+
+    #Métodos calculadores
+
+    def __str__(self):
+        """Devuelve una representación en cadena de los atributos de la consola como una tabla.
+           Returns:
+           str: Una cadena con el código, nombre, fabricante y precio con sus respectivos formatos"""
+        setlocale(LC_MONETARY, "en_US") #Le damos formato de moneda.
+        return (str(self.__codigo)+ " | " + str(self.__nombre)
+                + " | " + str(self.__fabricante)+ " | " + str(currency(self.__precio, grouping=True)))
