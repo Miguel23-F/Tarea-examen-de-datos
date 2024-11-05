@@ -1,0 +1,455 @@
+from Pila import *
+from Cola import *
+from Consola import *
+from SolicitudCompra import *
+import csv
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from locale import currency, setlocale, LC_MONETARY
+setlocale(LC_MONETARY, "en_US")
+
+def numSolicitudes (pila: Pila, dato, atributo):
+    '''
+    función que nos cuenta el número de solicitudes que una consola ha tenido
+    :param pila: pila en la que están guardadas las consolas
+    :param dato: El dato en específico que estamos buscando
+    :param atributo: El atributo por el que se busca en la pila
+    :return: El número de solicitudes que se registraron de la pila
+    '''
+    it1 = iter(pila)
+    num = 0
+    if atributo == "NombreConsola":
+        try:
+            while True:
+                if next(it1).NombreConsola == dato:
+                    num+=1
+        except StopIteration:
+            pass
+    elif atributo == "RFCtienda":
+        try:
+            while True:
+                if next(it1).RFCtienda == dato:
+                    num+=1
+        except StopIteration:
+            pass
+    elif atributo == "NombreTienda":
+        try:
+            while True:
+                if next(it1).NombreTienda == dato:
+                    num+=1
+        except StopIteration:
+            pass
+    return num
+
+def numConsolas (cola: Cola, dato, atributo):
+    '''
+    Función que cuenta el número de consolas en el almacen
+    :param cola: El lugar donde se buscan las consolas
+    :param dato: El dato en especifico a buscar
+    :param atributo: El atributo al que pertenece el dato a buscar
+    :return: El número de consolas que hay guardadas
+    '''
+    it1 = iter(cola)
+    num = 0
+    if atributo == "nombre":
+        try:
+            while True:
+                if next(it1).nombre == dato:
+                    num+=1
+        except StopIteration:
+            pass
+    elif atributo == "codigo":
+        try:
+            while True:
+                if next(it1).codigo == dato:
+                    num+=1
+        except StopIteration:
+            pass
+    elif atributo == "fabricante":
+        try:
+            while True:
+                if next(it1).fabricante == dato:
+                    num+=1
+        except StopIteration:
+            pass
+    return num
+
+def eliminarN (cola: Cola, consola, n: int):
+    '''
+    Método que elimina una consola por medio de su número de serie
+    :param cola: La cola de la que se desea eliminar ciertas consolas
+    :param consola: La consola a eliminar
+    :param n:el número de la consola a eliminar
+    :return: La cola sin las consolas recien eliminadas
+    '''
+    it1=iter(cola)
+    Cola2 = Cola()
+    eliminaciones = 0
+    try:
+        while True:
+            a=next(it1)
+            if a.nombre != consola:
+                Cola2.encolar(a)
+            elif a.nombre == consola and eliminaciones >= n:
+                Cola2.encolar(a)
+            elif a.nombre == consola and eliminaciones < n:
+                eliminaciones+=1
+
+    except StopIteration:
+        pass
+    return Cola2
+
+def leerArchivoConsolas(cola: Cola, archivo_csv):
+    '''
+    Método que permite leer los archivos donde se guardan las consolas en formato csv
+    :param cola: la cola en la que se van a agregar las consolas leidas
+    :param archivo_csv: El archivo de donde se van a leer las consolas
+    '''
+    with open(archivo_csv, newline='', encoding='utf-8') as csvfile:
+            lector = csv.reader(csvfile)
+            next(lector)  # Saltar la primera fila si contiene encabezados
+            for fila in lector:
+                try:
+                    codigo = fila[0]
+                    nombre = fila[1]
+                    fabricante = fila[2]
+                    precio = float(fila[3])
+
+                    consola = Consola(codigo, nombre, fabricante, precio)
+                    cola.encolar(consola)
+                    print(f"Consola agregada: {consola}")  # Impresión de depuración
+
+                except ValueError as e:
+                    print(f"Error al procesar la fila: {fila}")
+                    continue
+
+def leerArchivoSolicitudes(cola: Cola, archivo_csv):
+    '''
+    Método que permite leer las solicitudes de una consola
+    :param cola: La cola donde se guardan los archivos leidos
+    :param archivo_csv: El archivo del cual vamos a leer las solicitudes
+    '''
+    with open(archivo_csv, newline='', encoding='utf-8') as csvfile:
+            lector = csv.reader(csvfile)
+            next(lector)  # Saltar la primera fila si contiene encabezados
+            for fila in lector:
+                try:
+                    RFC = fila[0]
+                    tienda = fila[1]
+                    consola = fila[2]
+                    match consola:
+                        case "PlayStation 5":
+                            precio = 1999
+                        case "Xbox series S":
+                            precio = 1399
+                        case "Xbox series X":
+                            precio = 1699
+                    cantidad = int(fila[3])
+                    x = numConsolas(cola, consola, "nombre")
+                    if cantidad<numConsolas(cola, consola, "nombre"):
+                        cantidad = int(fila[3])
+                    else:
+                        raise ValueError
+                    precioTotal = cantidad * precio
+
+                    solicitud = SolicitudCompra(RFC, tienda, consola, cantidad)
+                    PilaSolicitudes.push(solicitud)
+                    cola = eliminarN(cola, consola, cantidad)
+
+                    print(f"Solicitud agregada: {solicitud}")
+                    print("Precio total: "+ str(currency(precioTotal, grouping=True)))
+
+                except ValueError as e:
+                    print(f"Error al procesar la fila: {fila}")
+                    print(f"Error: {e}")
+                    continue
+        return cola
+
+# Menú de consulta
+
+if __name__=="__main__":
+    volver_al_menu = 's'
+    BandaMagnetica = Cola()
+    PilaSolicitudes = Pila()
+
+    print("¡Bienvenido al almacén de videojuegos R2-Dato!")
+    while True:
+        try:
+            archivo1 = input("Ingrese la ruta del archivo con las consolas en almacén: ")
+            leerArchivoConsolas(BandaMagnetica, archivo1)
+            break
+        except FileNotFoundError:
+            print(f"No se encontó el archivo {archivo1}.")
+            continue
+
+    while True:
+         try:
+             archivo2 = input("Ingrese la ruta del archivo con las solicitudes de compra: ")
+             BandaMagnetica= leerArchivoSolicitudes(BandaMagnetica, archivo2)
+             break
+         except FileNotFoundError:
+             print(f"No se encontró el archivo {archivo2}")
+             pass
+
+
+    while volver_al_menu.lower() == 's':
+        # Mostramos las opciones del menu usando rich
+        console = Console()
+
+        table = Table(title="Menú del almacén de videojuegos R2-Dato")
+        table.add_column("Opción", style="cyan")
+        table.add_column("Descripción")
+
+        table.add_row("1", "Almacenar una nueva consola de videojuegos.")
+        table.add_row("2", "Consulta el número de existencias de alguna consola")
+        table.add_row("3", "Registrar una nueva solicitud de compra.")
+        table.add_row("4", "Mostrar la banda de videojuegos.")
+        table.add_row("5", "Mostrar la pila de solicitudes de compra.")
+        table.add_row("6", "Conocer el número de solicitudes existentes bajo algún criterio.")
+
+        table.add_row("7", "Salir.")
+
+        console.print(Panel(table, title="Menú"))
+
+
+        opcion = input("Elige una opción: ")
+        while opcion not in "1234567":
+            opcion=input("Por favor, ingrese una opción válida: ")
+
+        match opcion:
+            case "1":
+                # Almacenar una nueva consola de videojuegos
+                codigo = input("Ingrese el código de la consola a agregar: ")
+                while len(codigo) != 10 or not(codigo[0].isalpha() and codigo[9].isalpha() and codigo[1:8].isnumeric()):
+                    codigo = input("Por favor, ingrese un código con el formato adecuado "
+                                   "(10 caracteres, primero y último alfabéticos, los demás numéricos): ")
+                print("a) PlayStation 5\n"
+                                    "b) Xbox series S\n"
+                                    "c) Xbox Series X")
+                tipoconsola = input("Elija el nombre de la consola a agregar: ")
+                while tipoconsola.lower() not in "abc" or len(tipoconsola)!=1:
+                    tipoconsola = input("Por favor, ingrese una opción válida. [a,b,c]: ")
+                # Una vez escogido el tipo de consola lo demás está predeterminado
+                match tipoconsola.lower():
+                    case "a":
+                        nombre = "PlayStation 5"
+                        fabricante = "Sony"
+                        precio = 11999
+                    case "b":
+                        nombre = "Xbox Series S"
+                        fabricante = "Microsorf"
+                        precio = 11399
+                    case "c":
+                        nombre = "Xbox Series X"
+                        fabricante = "Microsorf"
+                        precio = 1699
+
+                consola=Consola(codigo, nombre, fabricante, precio)
+                BandaMagnetica.encolar(consola)
+                print(f"Se ha agregado la consola {consola} a la Banda Magnética.")
+
+
+            case "2":
+                # Consulta el número de existencias de alguna consola
+                print("Criterios de búsqueda: \n "
+                      "a) Por código de producto.\n"
+                      "b) Por nombre de consola. \n"
+                      "c) Por empresa fabricante.")
+                criterio = input("Elija una opción: ")
+                while criterio.lower() not in "abc" or len(criterio) != 1:
+                    criterio = input("Por favor, ingrese una opción válida. [a,b,c]: ")
+                match criterio.lower():
+                    case "a":
+                        codigoConsola = input("Ingrese el código de la consola.")
+                        print(f"Hay un total de {numConsolas(BandaMagnetica, codigoConsola, "codigo")} consolas "
+                              f"con el código {codigoConsola}.")
+                    case "b":
+                        print("Opciones: \n"
+                              "a) PlayStation 5\n"
+                              "b) Xbox series S\n"
+                              "c) Xbox Series X")
+                        opcionNombre = input("Elija una opción: ")
+                        while opcionNombre not in "abc" or len(opcionNombre)!=1:
+                            opcionNombre = input("Por favor, ingrese una opción válida [a,b,c]: ")
+                        match opcionNombre.lower():
+                            case "a":
+                                nombreConsola = "PlayStation 5"
+                            case "b":
+                                nombreConsola = "Xbox series S"
+                            case "c":
+                                nombreConsola = "Xbox series X"
+                        print(f"Hay un total de {numConsolas(BandaMagnetica, nombreConsola, "nombre")} consolas {nombreConsola}: ")
+                    case "c":
+                        print("Opciones: \n"
+                              "a) Sony \n"
+                              "b) Microsoft")
+                        opcionFabricante = input("Elija una opción.")
+                        while opcionFabricante not in "abc" or len(opcionFabricante)!=1:
+                            opcionFabricante = input("Por favor, ingrese una opción válida [a,b,c]: ")
+                        match opcionFabricante.lower():
+                            case "a":
+                                fabricanteConsola = "Sony"
+                            case "b":
+                                fabricanteConsola = "Microsoft"
+                        print(f"Hay un total de {numConsolas(BandaMagnetica, fabricanteConsola, "fabricante")} consolas "
+                              f"fabricadas por {fabricanteConsola}")
+
+
+            case "3":
+                # Registrar una nueva solicitud de compra
+                RFC = input("Ingrese el RFC de la tienda: ")
+                while len(RFC) != 12 or not(RFC[0:2].isalpha() and RFC[3:8].isnumeric() and (j.isalpha() or j.isnumeric() for j in RFC[9:11])):
+                    # No es un RFC correcto
+                    RFC = input("Por favor, ingrese un RFC con el formato de empresa. "
+                                "(12 caracteres: primeros 3 alfabéticos, sig. 6 numéricos, últimos 3 alfanuméricos.):" )
+                tienda = input("Ingrese el nombre de la tienda: ")
+                tipoconsola = input("Ingrese la consola solicitada: \n"
+                                    "a) PlayStation 5\n"
+                                    "b) Xbox series S\n "
+                                    "c) Xbox series X: ")
+                while tipoconsola.lower() not in "abc" or len(tipoconsola)!=1:
+                    tipoconsola = input("Por favor, ingrese una opción válida [a,b,c]: ")
+                if tipoconsola.lower() == "a":
+                        nombre = "PlayStation 5"
+                        precio = 1999
+                elif tipoconsola.lower() == "b":
+                        nombre = "Xbox series S"
+                        precio = 11399
+                elif tipoconsola.lower() == "c":
+                        precio = 11699
+                        nombre = "Xbox series X"
+
+                while True:
+                    try:
+                        cantidadSolicitada = int(input("Ingrese la cantidad de consolas solicitadas: "))
+                        if cantidadSolicitada <= 0:
+                            print("Por favor, ingrese una cantidad válida.")
+                            continue
+                        else:
+                            pass
+                    except ValueError:
+                        print("Por favor, ingrese una cantidad válida.")
+                        continue
+                    stock = numConsolas(BandaMagnetica, nombre, "nombre")
+                    if cantidadSolicitada <= stock:
+                        # Hay suficientes consolas en el almacen
+                        precioTotal = precio * cantidadSolicitada
+                        nuevaSolicitud = SolicitudCompra(RFC, tienda, nombre, cantidadSolicitada, precioTotal)
+                        PilaSolicitudes.push(nuevaSolicitud)
+                        BandaMagnetica = eliminarN(BandaMagnetica, nombre, cantidadSolicitada)
+                        print(f"Solicitud agregada: {tienda} {RFC}, {cantidadSolicitada} consolas {nombre}.")
+                        print("Precio total: " + str(currency(precioTotal, grouping=True)))
+
+                        break
+
+                    else:
+                        if stock>0:
+                            # No hay suficientes consolas en el almacen
+                            print(f"Por el momento no se cuenta con la cantidad de {nombre} para aceptar la solicitud."
+                                  f"Se tienen {stock} consolas {nombre}.")
+                            cambiar = input("¿Desea cambiar la cantidad de consolas de la solicitud? [S/N]")
+                            while cambiar.lower() not in "sn" or len(cambiar) !=1 :
+                                cambiar = input("Por favor, ingrese una respuesta válida. [S/N]")
+                            if cambiar.lower() == "s":
+                                continue
+                            else:
+                                print("Se ha rechazado la solicitud.")
+                                break
+                        else:
+                            # No hay consolas en el almacen
+                            print(f"Por el momento no se cuenta con consolas {nombre}, por favor, ingrese su pedido más tarde.")
+                            break
+
+            case "4":
+                # Mostrar la banda de videojuegos.
+                if not BandaMagnetica.esta_vacio():
+                    print(BandaMagnetica)
+                else:
+                    print("No hay concolas en la banda magnética.")
+
+
+            case "5":
+                # Mostrar la pila de solicitudes de compra.
+                if not PilaSolicitudes.esta_vacia():
+                    print(PilaSolicitudes)
+                else:
+                    print("No hay solicitudes de compra.")
+
+
+            case "6":
+               # Conocer el número de solicitudes existentes bajo algún criterio
+                print("Criterios \n"
+                      "a) Por RFC de tienda\n"
+                      "b) Por nombre de tienda\n"
+                      "c) Por nombre de consola\n")
+                criterio = input("Ingrese el criterio de búsqueda: ")
+                while criterio.lower() not in "abc" or len(criterio) != 1:
+                    criterio = input("Por favor, ingrese una opción válida: ")
+                match criterio.lower():
+                    case "a":
+                        RFC = input("Ingrese el RFC de la tienda ")
+                        print(f"Hay un total de {numSolicitudes(PilaSolicitudes,RFC, "RFCtienda")} "
+                              f"solicitudes de la tienda con el RFC {RFC}")
+                    case "b":
+                        tienda = input("Ingrese el nombre de la tienda ")
+                        print(f"Hay un total de {numSolicitudes(PilaSolicitudes, tienda, "NombreTienda")} "
+                              f"solicitudes de la tienda {tienda}")
+                    case "c":
+                        tipoconsola = input("Ingrese la consola solicitada: \n"
+                                            "a) PlayStation 5\n"
+                                            "b) Xbox series S\n "
+                                            "c) Xbox series X: ")
+                        while tipoconsola.lower() not in "abc" or len(tipoconsola) != 1:
+                            tipoconsola = input("Por favor, ingrese una opción válida [a,b,c]: ")
+                        if tipoconsola.lower() == "a":
+                            nombre = "PlayStation 5"
+                        elif tipoconsola.lower() == "b":
+                            nombre = "Xbox series S"
+                        elif tipoconsola.lower() == "c":
+                            nombre = "Xbox series X"
+                        print(f"Hay un total de {numSolicitudes(PilaSolicitudes, nombre, "NombreConsola")} "
+                              f"solicitudes de la consola {nombre}")
+
+            case "7":
+                if BandaMagnetica.esta_vacio() and PilaSolicitudes.esta_vacia():
+                    print("La banda magnética y la pila de solicitudes están vacías.")
+                else:
+                    with open(archivo1 + ".csv", 'w', newline='', encoding='utf-8') as archivo_csv:
+                        escritor_csv = csv.writer(archivo_csv)
+                        escritor_csv.writerow(["Código", "Nombre", "Fabricante", "Precio"])  # Encabezado
+                        for consola in BandaMagnetica:
+                            escritor_csv.writerow([consola.codigo, consola.nombre, consola.fabricante, consola.precio])
+                        print(f"Repisa ordenada guardada en {archivo1}.csv")
+                    with open(archivo2 + ".csv", 'w', newline='', encoding='utf-8') as archivo_csv:
+                        escritor_csv = csv.writer(archivo_csv)
+                        escritor_csv.writerow(["RFC", "Tienda", "Consola", "Cantidad"])  # Encabezado
+                        for solicitud in PilaSolicitudes:
+                            escritor_csv.writerow([consola.codigo, consola.nombre, consola.fabricante, consola.precio])
+                        print(f"Repisa ordenada guardada en {archivo2}.csv")
+                print("Gracias por usar el almacén de consolas R2-Dato. ¡Hasta Luego!")
+                break
+
+        respuesta = input("¿Desea continuar usando el programa? [S/N]: ")
+        while respuesta.lower() not in "sn" or len(respuesta)!=1:
+            respuesta = input("Por favor, ingrese una opción válida [S/N]: ")
+        if respuesta.lower() == "s":
+            continue
+        elif respuesta.lower() == "n":
+            if BandaMagnetica.esta_vacio() and PilaSolicitudes.esta_vacia():
+                print("La banda magnética y la pila de solicitudes están vacías.")
+            else:
+                with open(archivo1 + ".csv", 'w', newline='', encoding='utf-8') as archivo_csv:
+                    escritor_csv = csv.writer(archivo_csv)
+                    escritor_csv.writerow(["Código", "Nombre", "Fabricante", "Precio"])  # Encabezado
+                    for consola in BandaMagnetica:
+                        escritor_csv.writerow([consola.codigo, consola.nombre, consola.fabricante, consola.precio])
+                    print(f"Repisa ordenada guardada en {archivo1}.csv")
+                with open(archivo2 + ".csv", 'w', newline='', encoding='utf-8') as archivo_csv:
+                    escritor_csv = csv.writer(archivo_csv)
+                    escritor_csv.writerow(["RFC", "Tienda", "Consola", "Cantidad"])  # Encabezado
+                    for solicitud in PilaSolicitudes:
+                        escritor_csv.writerow([consola.codigo, consola.nombre, consola.fabricante, consola.precio])
+                    print(f"Repisa ordenada guardada en {archivo2}.csv")
+            print("Gracias por usar el almacén de consolas R2-Dato. ¡Hasta Luego!")
+            break
