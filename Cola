@@ -1,0 +1,121 @@
+"""
+Created on Mon Sep 23 23:40:04 2024
+
+@author: ferndo
+"""
+# Importa la clase encolable, y Nodo que representa los nodos de la cola
+from Encolable import *
+from Nodo import *
+
+class Cola(Encolable):
+
+    def __init__(self):
+        self.__inicio = None
+        self.__final = None
+        self.__tam = 0
+
+    def encolar(self, elemento: T):
+        """Agrega un nuevo elemento al final de la cola.
+                Args: elemento (T): El elemento que se desea agregar a la cola."""
+        nuevo_nodo = Nodo(elemento)
+        if self.esta_vacio():
+            # Si es que la cola está vacía, el nuevo nodo será el inicio como el final
+            self.__inicio = self.__final = nuevo_nodo
+        else:
+            # Agrega el nuevo nodo al final y actualizar
+            self.__final.siguiente = nuevo_nodo
+            self.__final = nuevo_nodo
+        self.__tam += 1
+
+    def desencolar(self) -> T:
+        """Elimina y devuelve el elemento del frente de la cola
+        Returns:
+            T: El elemento en el frente de la cola, si no está vacía; None en caso contrario.
+        """
+        if not self.esta_vacio():
+            # Aqui se guarda el valor del nodo de inicio
+            valor = self.__inicio.elemento
+            self.__inicio = self.__inicio.siguiente
+            # Si se desencola el último elemento
+            if self.__inicio is None:
+                # Si se desencola el último elemento el que esta al final se actualiza
+                self.__final = None
+            self.__tam -= 1
+            return valor
+
+    def tamanio(self) -> int:
+        """Devuelve el tamaño de la cola
+        Returns:
+            int: El número de elementos en la cola."""
+        return self.__tam
+
+    def esta_vacio(self) -> bool:
+        """Verifica si la cola está vacía
+         Returns:
+            bool: True si la cola está vacía, False en caso contrario.
+        """
+        return self.__inicio is None
+
+    def vaciar(self):
+        """Vacía la cola"""
+        self.__inicio = self.final = None
+        self.__tam = 0
+
+    # Métodos adicionales para la accesibilidad de la cola
+
+    def contiene(self, elemento: T) -> bool:
+        """
+        Método que permite saber si un elemento se encuentra contenido dentro de la Cola.
+        Este método no afecta el estado de la Cola.
+        """
+        return self.buscar(elemento) is not None
+
+    def buscar(self, elemento: T) -> Nodo:
+        """
+        Método que busca el Nodo que contiene el elemento pasado como parámetro.
+        Este método no afecta el estado de la Cola.
+        Args:
+            elemento (T): El elemento a buscar.
+
+        Returns:
+            Nodo: El nodo que contiene el elemento, o None si no se encuentra.
+        """
+        actual = self.__inicio
+        while actual is not None:
+            if actual.elemento == elemento:
+                return actual
+            actual = actual.siguiente
+        return None
+
+    def __str__(self) -> str:
+        """Método que permite imprimir la Cola en formato cadena.
+        Returns:
+            str: Una cadena con los elementos de la cola separados por "; ".
+        """
+        elementos = "Cola: "
+        for elem in self:
+            elementos += str(elem) + "; "
+        return elementos.rstrip("; ")
+
+    def __iter__(self):
+        """Método que inicializa el iterador de la Cola.
+        Returns:
+            Cola: Devuelve el objeto cola como un iterable.
+        """
+        self.pos = self.__inicio
+        return self
+
+    def __next__(self) -> T:
+        """Método que permite obtener el siguiente elemento de la Cola.
+        Returns:
+            T: El elemento siguiente en la cola.
+
+        Raises:
+            StopIteration: Si no hay más elementos en la cola.
+        """
+        if self.pos is not None:
+            valor = self.pos.elemento
+            self.pos = self.pos.siguiente
+            return valor
+        else:
+            raise StopIteration
